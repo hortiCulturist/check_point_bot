@@ -1,8 +1,10 @@
+import asyncio
+
 from aiogram import BaseMiddleware
 from aiogram.types import Message
 from typing import Callable, Awaitable, Dict
 
-from database.tables.chats import ChatsTable  # предположим ты так назовешь
+from bot_app.db.common.chats import ChatsTable
 
 
 class ChatActiveMiddleware(BaseMiddleware):
@@ -14,10 +16,9 @@ class ChatActiveMiddleware(BaseMiddleware):
     ) -> Awaitable:
         chat = event.chat
 
-        # проверяем, что это группа/супергруппа
         if chat.type in ("group", "supergroup"):
             is_active = await ChatsTable.is_active(chat.id)
             if not is_active:
-                return  # не пропускаем дальше
+                return await asyncio.sleep(0)
 
         return await handler(event, data)
