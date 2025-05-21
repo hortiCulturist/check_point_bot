@@ -30,7 +30,7 @@ async def handle_bot_promoted(event: ChatMemberUpdated, bot_id: int):
     # Назначили админом
     elif old_status != ChatMemberStatus.ADMINISTRATOR and new_status == ChatMemberStatus.ADMINISTRATOR:
         try:
-            await ChatsTable.add_chat(chat.id, chat.title, event.from_user.id)
+            await ChatsTable.add_chat(chat.id, chat.title, event.from_user.id, chat.type)
             log_chat_event(chat.id, chat.title, "⬆️ Бот назначен админом")
             log_chat_event(chat.id, chat.title, "📦 Группа зарегистрирована в базе")
         except PostgresError as e:

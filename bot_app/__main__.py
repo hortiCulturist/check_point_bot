@@ -15,10 +15,13 @@ dp.include_router(router)
 
 async def print_start_info(bot: Bot):
     me = await bot.get_me()
+
+    print("=" * 40)
     print("🤖 Бот запущен!")
     print(f"📛 Username: @{me.username}")
     print(f"🆔 ID: {me.id}")
     print(f"👤 Имя: {me.first_name}")
+    print("=" * 40)
 
 
 async def main():

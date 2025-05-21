@@ -1,6 +1,7 @@
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
+from bot_app.db.user.base import UserChatLinkTable
 from bot_app.misc import bot, router
 from bot_app.utils.logger import log_chat_event
 
@@ -13,7 +14,9 @@ async def check_access(call: CallbackQuery, state: FSMContext):
     user_id = call.from_user.id
 
     # Заглушка: даём доступ без проверки
+
     try:
+        await UserChatLinkTable.set_verified(chat_id, user_id)
         await bot.restrict_chat_member(
             chat_id=chat_id,
             user_id=user_id,
@@ -24,7 +27,7 @@ async def check_access(call: CallbackQuery, state: FSMContext):
                 "can_add_web_page_previews": True,
             }
         )
-
+        await UserChatLinkTable.set_unrestricted(chat_id, user_id)
         await call.message.answer("✅ Доступ открыт! Можете писать в чате.")
         log_chat_event(chat_id, "Bot", f"🔓 Пользователь {user_id} получил доступ по заглушке")
         await state.clear()

@@ -68,3 +68,35 @@ class UserChatLinkTable:
             log_chat_event(chat_id, "DB", f"❌ Ошибка при set_verified: {e}")
         finally:
             await con.close()
+
+    @staticmethod
+    async def set_restricted(chat_id: int, user_id: int):
+        con = await create_con()
+        try:
+            query = """
+                UPDATE user_chat_links
+                SET was_restricted = TRUE
+                WHERE chat_id = $1 AND user_id = $2;
+            """
+            await con.execute(query, chat_id, user_id)
+            log_chat_event(chat_id, "DB", f"🔒 Помечен как TRUE в was_restricted: {user_id}")
+        except Exception as e:
+            log_chat_event(chat_id, "DB", f"❌ Ошибка при set_restricted: {e}")
+        finally:
+            await con.close()
+
+    @staticmethod
+    async def set_unrestricted(chat_id: int, user_id: int):
+        con = await create_con()
+        try:
+            query = """
+                UPDATE user_chat_links
+                SET was_restricted = FALSE
+                WHERE chat_id = $1 AND user_id = $2;
+            """
+            await con.execute(query, chat_id, user_id)
+            log_chat_event(chat_id, "DB", f"🔒 Помечен как FALSE в was_restricted: {user_id}")
+        except Exception as e:
+            log_chat_event(chat_id, "DB", f"❌ Ошибка при set_restricted: {e}")
+        finally:
+            await con.close()

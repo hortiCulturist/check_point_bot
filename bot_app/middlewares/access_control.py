@@ -1,8 +1,9 @@
-# bot_app/middlewares/access_control.py
-
 from aiogram.types import Message
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
 from typing import Callable, Dict, Awaitable
+
+from bot_app.db.user.base import UserChatLinkTable
+from bot_app.markups.user.base import get_start_button
 from bot_app.misc import bot, redis
 from bot_app.utils.logger import log_chat_event
 from bot_app.db.common.chats import ChatsTable
@@ -24,20 +25,16 @@ class AccessControlMiddleware(BaseMiddleware):
 
         key = f"verified:{chat_id}:{user_id}"
 
-        # Кэш проверен? Просто пропускаем
         if await redis.get(key):
             return await handler(message, data)
 
-        # Проверим, активна ли группа
         if not await ChatsTable.is_active(chat_id):
             return await handler(message, data)
 
-        # Проверка в БД (напр. user прошёл задание)
-        if await ChatsTable.is_user_verified(chat_id, user_id):
-            await redis.set(key, "1", ex=86400)  # 1 день
+        if await UserChatLinkTable.is_verified(chat_id, user_id):
+            await redis.set(key, "1", ex=86400)
             return await handler(message, data)
 
-        # Не прошёл — мутим и шлём в бота
         try:
             await bot.delete_message(chat_id, message.message_id)
             await bot.restrict_chat_member(
@@ -45,7 +42,13 @@ class AccessControlMiddleware(BaseMiddleware):
                 user_id=user_id,
                 permissions={"can_send_messages": False}
             )
-            # optionally send inline-кнопку
+
+            await bot.send_message(
+                chat_id=chat_id,
+                text=f"👋 Чтобы писать в чате — откройте бота и выполните задание:",
+                reply_markup=await get_start_button(chat_id)
+            )
+
             log_chat_event(chat_id, "Bot", f"🔒 {user_id} ограничен до выполнения задания")
         except Exception as e:
             log_chat_event(chat_id, "Bot", f"❌ Ошибка при auto-муте: {e}")

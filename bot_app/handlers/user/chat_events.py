@@ -1,8 +1,8 @@
 from aiogram.types import ChatMemberUpdated
 from aiogram.enums import ChatMemberStatus
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from bot_app.db.user.base import UserTable, UserChatLinkTable
+from bot_app.markups.user.base import get_start_button
 from bot_app.misc import bot, router
 from bot_app.db.common.chats import ChatsTable
 from bot_app.utils.logger import log_chat_event
@@ -37,19 +37,13 @@ async def on_user_joined(event: ChatMemberUpdated):
                 "can_add_web_page_previews": False,
             }
         )
+        await UserChatLinkTable.set_restricted(chat.id, user.id)
         log_chat_event(chat.id, chat.title, f"🔒 Ограничен {user.full_name} ({user.id}) при входе")
-
-        builder = InlineKeyboardBuilder()
-        bot_username = (await bot.me()).username
-        builder.button(
-            text="🔓 Получить доступ",
-            url=f"https://t.me/{bot_username}?start=group__{abs(chat.id)}"
-        )
 
         await bot.send_message(
             chat_id=chat.id,
             text=f"👋 Чтобы писать в чате — откройте бота и выполните задание:",
-            reply_markup=builder.as_markup()
+            reply_markup=await get_start_button(chat.id)
         )
         log_chat_event(chat.id, chat.title, f"📨 {user.full_name} ({user.id}) направлен в бота")
 
