@@ -3,13 +3,16 @@ from aiogram.enums import ChatMemberStatus
 from asyncpg import PostgresError
 
 from bot_app.db.common.chats import ChatsTable
+from bot_app.misc import router, bot
 from bot_app.utils.logger import log_chat_event
 
 
-async def handle_bot_promoted(event: ChatMemberUpdated, bot_id: int):
+@router.my_chat_member()
+async def handle_bot_promoted(event: ChatMemberUpdated):
     chat = event.chat
+    me = await bot.get_me()
 
-    if event.new_chat_member.user.id != bot_id:
+    if event.new_chat_member.user.id != me.id:
         return
 
     old_status = event.old_chat_member.status
