@@ -2,11 +2,11 @@ from aiogram.types import Message
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
 from typing import Callable, Dict, Awaitable
 
-from bot_app.db.user.base import UserChatLinkTable
-from bot_app.markups.user.base import get_start_button
 from bot_app.misc import bot, redis
-from bot_app.utils.logger import log_chat_event
 from bot_app.db.common.chats import ChatsTable
+from bot_app.db.common.task_completions import TaskCompletionTable
+from bot_app.utils.logger import log_chat_event
+from bot_app.markups.user.base import get_start_button
 
 
 class AccessControlMiddleware(BaseMiddleware):
@@ -31,7 +31,7 @@ class AccessControlMiddleware(BaseMiddleware):
         if not await ChatsTable.is_active(chat_id):
             return await handler(message, data)
 
-        if await UserChatLinkTable.is_verified(chat_id, user_id):
+        if await TaskCompletionTable.has_completed_all(user_id, chat_id):
             await redis.set(key, "1", ex=86400)
             return await handler(message, data)
 
@@ -49,6 +49,6 @@ class AccessControlMiddleware(BaseMiddleware):
                 reply_markup=await get_start_button(chat_id)
             )
 
-            log_chat_event(chat_id, "Bot", f"🔒 {user_id} ограничен до выполнения задания")
+            log_chat_event(chat_id, "Bot", f"🔒 {user_id} ограничен до выполнения всех заданий")
         except Exception as e:
             log_chat_event(chat_id, "Bot", f"❌ Ошибка при auto-муте: {e}")
