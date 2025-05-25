@@ -27,16 +27,10 @@ class AccessControlMiddleware(BaseMiddleware):
         user_id = message.from_user.id
         chat_id = message.chat.id
 
-        key = f"verified:{chat_id}:{user_id}"
-
-        if await redis.get(key):
-            return await handler(message, data)
-
         if not await ChatsTable.is_active(chat_id):
             return await handler(message, data)
 
         if await TaskCompletionTable.has_completed_all(user_id, chat_id):
-            await redis.set(key, "1", ex=86400)
             return await handler(message, data)
 
         try:

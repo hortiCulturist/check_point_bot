@@ -1,6 +1,9 @@
+from aiogram import types
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
+from datetime import datetime
 
+from bot_app.config import ADMIN_ID
 from bot_app.db.common.task_completions import TaskCompletionTable
 from bot_app.db.common.tasks import TaskTable
 from bot_app.db.user.base import UserChatLinkTable
@@ -14,6 +17,13 @@ async def check_access(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     chat_id = data.get("chat_id")
     user_id = call.from_user.id
+
+    start_time_str = data.get("start_time")
+    if start_time_str:
+        start_time = datetime.fromisoformat(start_time_str)
+        elapsed = (datetime.utcnow() - start_time).total_seconds()
+        if elapsed < 15:
+            return await call.message.answer("⏳ Не так быстро. Выполните задание.")
 
     try:
         tasks = await TaskTable.get_active_tasks(chat_id)
@@ -42,3 +52,10 @@ async def check_access(call: CallbackQuery, state: FSMContext):
         await call.message.answer("⚠️ Произошла ошибка при разблокировке.")
         log_chat_event(chat_id, "Bot", f"❌ Ошибка при разблокировке {user_id}: {e}")
 
+
+@router.message()
+async def catch_all(message: types.Message):
+    if message.from_user.id in ADMIN_ID:
+        return
+
+    pass

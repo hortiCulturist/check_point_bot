@@ -8,6 +8,7 @@ from bot_app.db.common.tasks import TaskTable
 from bot_app.db.user.base import UserChatLinkTable, UserTable
 from bot_app.misc import router
 from bot_app.states.user.base import AccessFlow
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -35,11 +36,11 @@ async def start_handler(message: Message, state: FSMContext):
         await UserTable.add_user(user_id, user.username, user.full_name)
         await UserChatLinkTable.add_link(user_id, chat_id)
 
-        is_verified = await UserChatLinkTable.is_verified(chat_id, user_id)
-        if is_verified:
-            return await message.answer("✅ Вы уже получили доступ к чату.")
-
-        await state.update_data(chat_id=chat_id, user_id=user_id)
+        await state.update_data(
+            chat_id=chat_id,
+            user_id=user_id,
+            start_time=datetime.utcnow().isoformat()
+        )
         await state.set_state(AccessFlow.waiting_for_check)
 
         tasks = await TaskTable.get_active_tasks(chat_id)
