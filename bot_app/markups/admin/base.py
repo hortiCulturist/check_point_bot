@@ -25,14 +25,10 @@ async def get_tasks_chats_kb() -> InlineKeyboardMarkup:
     if chats:
         for chat in chats:
             title_raw = chat["title"] or "Канал"
-            try:
-                title_encoded = quote(title_raw)
-            except Exception:
-                title_encoded = "Канал"
 
             builder.button(
                 text=title_raw,
-                callback_data=f"admin_tasks_chat__{chat['chat_id']}__{title_encoded}"
+                callback_data=f"admin_tasks_chat__{chat['chat_id']}"
             )
 
         builder.adjust(1)

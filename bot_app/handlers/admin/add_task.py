@@ -25,12 +25,14 @@ async def start_add_task(call: CallbackQuery, state: FSMContext):
     builder = InlineKeyboardBuilder()
     for chat in chats:
         title = chat["title"] or "Без названия"
+
         builder.button(
-            text=title,
-            callback_data=f"admin_add_task_chat__{chat['chat_id']}__{quote(title)}"
+            text=title[:30],
+            callback_data=f"admin_add_task_chat__{chat['chat_id']}"
         )
     builder.button(text="🔙 Назад", callback_data="admin_back_to_main")
     builder.adjust(1)
+    await state.update_data(chats_map={str(chat["chat_id"]): chat["title"] or "Без названия" for chat in chats})
 
     await state.set_state(AddTaskStates.choosing_chat)
     await call.message.edit_text("💬 Выберите чат, для которого будет задание:", reply_markup=builder.as_markup())
@@ -39,9 +41,10 @@ async def start_add_task(call: CallbackQuery, state: FSMContext):
 @router.callback_query(lambda c: c.data.startswith("admin_add_task_chat__"))
 async def choose_chat_for_task(call: CallbackQuery, state: FSMContext):
     await call.answer()
-    parts = call.data.split("__", maxsplit=2)
-    chat_id = int(parts[1])
-    chat_title = parts[2]
+    chat_id = int(call.data.split("__")[1])
+
+    data = await state.get_data()
+    chat_title = data.get("chats_map", {}).get(str(chat_id), "Без названия")
 
     await state.update_data(chat_id=chat_id, chat_title=chat_title)
     await state.set_state(AddTaskStates.entering_title)
@@ -176,8 +179,8 @@ async def back_to_choose_chat(call: CallbackQuery, state: FSMContext):
     for chat in chats:
         title = chat["title"] or "Без названия"
         builder.button(
-            text=title,
-            callback_data=f"admin_add_task_chat__{chat['chat_id']}__{quote(title)}"
+            text=title[:30],
+            callback_data=f"admin_add_task_chat__{chat['chat_id']}"
         )
     builder.button(text="🔙 Назад", callback_data="admin_back_to_main")
     builder.adjust(1)

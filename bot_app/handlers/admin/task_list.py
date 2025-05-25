@@ -28,9 +28,8 @@ async def back_to_main_menu(call: CallbackQuery):
 @router.callback_query(lambda c: c.data.startswith("admin_tasks_chat__"))
 async def show_tasks_for_chat(call: CallbackQuery):
     await call.answer()
-    parts = call.data.split("__", maxsplit=2)
+    parts = call.data.split("__")
     chat_id = int(parts[1])
-    chat_title = unquote(parts[2]) if len(parts) > 2 else "Канал"
 
     tasks = await TaskTable.get_tasks_by_chat(chat_id)
     if not tasks:
