@@ -46,3 +46,23 @@ class ChatsTable:
             await con.execute(query, chat_id)
         finally:
             await con.close()
+
+    @staticmethod
+    async def get_all_active() -> list[dict]:
+        con = await create_con()
+        try:
+            query = "SELECT chat_id, title FROM chats WHERE is_active = TRUE ORDER BY title;"
+            rows = await con.fetch(query)
+            return [dict(row) for row in rows]
+        finally:
+            await con.close()
+
+    @staticmethod
+    async def get_all() -> list[dict]:
+        con = await create_con()
+        try:
+            query = "SELECT * FROM chats ORDER BY created_at DESC"
+            rows = await con.fetch(query)
+            return [dict(row) for row in rows]
+        finally:
+            await con.close()

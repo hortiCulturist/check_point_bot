@@ -2,6 +2,7 @@ from aiogram.types import Message
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
 from typing import Callable, Dict, Awaitable
 
+from bot_app.config import ADMIN_ID
 from bot_app.misc import bot, redis
 from bot_app.db.common.chats import ChatsTable
 from bot_app.db.common.task_completions import TaskCompletionTable
@@ -16,6 +17,9 @@ class AccessControlMiddleware(BaseMiddleware):
         message: Message,
         data: Dict
     ) -> Awaitable:
+
+        if message.from_user.id in ADMIN_ID:
+            return await handler(message, data)
 
         if message.chat.type != "supergroup":
             return await handler(message, data)

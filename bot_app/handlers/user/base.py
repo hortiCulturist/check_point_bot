@@ -32,6 +32,7 @@ async def check_access(call: CallbackQuery, state: FSMContext):
         )
 
         await UserChatLinkTable.set_unrestricted(chat_id, user_id)
+        await UserChatLinkTable.set_verified(chat_id, user_id)
 
         await call.message.answer("✅ Доступ открыт! Можете писать в чате.")
         log_chat_event(chat_id, "Bot", f"🔓 Пользователь {user_id} получил доступ после выполнения заданий")

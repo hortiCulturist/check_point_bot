@@ -59,8 +59,3 @@ async def start_handler(message: Message, state: FSMContext):
         return
 
     await message.answer("❗️Команда не распознана.")
-
-
-@router.message()
-async def any_message_handler(message: Message):
-    pass
