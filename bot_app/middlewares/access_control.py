@@ -1,13 +1,14 @@
-from aiogram.types import Message
-from aiogram.dispatcher.middlewares.base import BaseMiddleware
 from typing import Callable, Dict, Awaitable
 
+from aiogram.dispatcher.middlewares.base import BaseMiddleware
+from aiogram.types import Message
+
 from bot_app.config import ADMIN_ID
-from bot_app.misc import bot, redis
 from bot_app.db.common.chats import ChatsTable
 from bot_app.db.common.task_completions import TaskCompletionTable
-from bot_app.utils.logger import log_chat_event
 from bot_app.markups.user.base import get_start_button
+from bot_app.misc import bot
+from bot_app.utils.logger import log_chat_event
 
 
 class AccessControlMiddleware(BaseMiddleware):

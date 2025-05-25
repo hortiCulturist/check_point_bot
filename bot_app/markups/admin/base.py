@@ -1,6 +1,7 @@
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from urllib.parse import quote
+
+from aiogram.types import InlineKeyboardMarkup
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
 def get_admin_main_kb():
@@ -34,9 +35,8 @@ async def get_tasks_chats_kb() -> InlineKeyboardMarkup:
                 callback_data=f"admin_tasks_chat__{chat['chat_id']}__{title_encoded}"
             )
 
-        builder.adjust(1)  # каждая кнопка в своём ряду
+        builder.adjust(1)
 
-    # Добавляем кнопку назад в последнем ряду
     builder.button(
         text="🔙 Назад",
         callback_data="admin_back_main"

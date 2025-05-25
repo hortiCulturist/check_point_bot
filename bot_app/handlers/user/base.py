@@ -1,7 +1,8 @@
+from datetime import datetime
+
 from aiogram import types
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery
-from datetime import datetime
+from aiogram.types import CallbackQuery
 
 from bot_app.config import ADMIN_ID
 from bot_app.db.common.task_completions import TaskCompletionTable

@@ -18,19 +18,15 @@ async def handle_bot_promoted(event: ChatMemberUpdated):
     old_status = event.old_chat_member.status
     new_status = event.new_chat_member.status
 
-    # Сняли с админки
     if old_status == ChatMemberStatus.ADMINISTRATOR and new_status != ChatMemberStatus.ADMINISTRATOR:
         log_chat_event(chat.id, chat.title, "⬇️ Бот снят с админки")
 
-    # Удалили из группы
     elif new_status in [ChatMemberStatus.LEFT, ChatMemberStatus.KICKED]:
         log_chat_event(chat.id, chat.title, "❌ Бот покинул или был удалён из группы")
 
-    # Простой участник
     elif new_status == ChatMemberStatus.MEMBER:
         log_chat_event(chat.id, chat.title, "➕ Бот добавлен в группу как обычный участник")
 
-    # Назначили админом
     elif old_status != ChatMemberStatus.ADMINISTRATOR and new_status == ChatMemberStatus.ADMINISTRATOR:
         try:
             await ChatsTable.add_chat(chat.id, chat.title, event.from_user.id, chat.type)

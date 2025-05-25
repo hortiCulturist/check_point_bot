@@ -1,10 +1,8 @@
 from bot_app.db.common.tasks import TaskTable
-from bot_app.db.main import create_con
 from bot_app.utils.logger import log_chat_event
 
 
 async def deactivate_expired_tasks():
-    print("CRON запущен")
     try:
         rows = await TaskTable.deactivate_expired_tasks()
 

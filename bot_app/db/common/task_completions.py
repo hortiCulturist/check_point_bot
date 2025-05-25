@@ -2,10 +2,6 @@ from bot_app.db.main import create_con
 from bot_app.utils.logger import log_chat_event
 
 
-from bot_app.db.main import create_con
-from bot_app.utils.logger import log_chat_event
-
-
 class TaskCompletionTable:
     @staticmethod
     async def mark_completed(user_id: int, chat_id: int, task_id: int):
