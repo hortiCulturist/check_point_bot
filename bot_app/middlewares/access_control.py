@@ -7,7 +7,7 @@ from bot_app.config import ADMIN_ID
 from bot_app.db.common.chats import ChatsTable
 from bot_app.db.common.task_completions import TaskCompletionTable
 from bot_app.markups.user.base import get_start_button
-from bot_app.misc import bot
+from bot_app.misc import bot, redis
 from bot_app.utils.logger import log_chat_event
 
 
@@ -31,7 +31,13 @@ class AccessControlMiddleware(BaseMiddleware):
         if not await ChatsTable.is_active(chat_id):
             return await handler(message, data)
 
+        cache_key = f"verified:{chat_id}:{user_id}"
+
+        if await redis.get(cache_key):
+            return await handler(message, data)
+
         if await TaskCompletionTable.has_completed_all(user_id, chat_id):
+            await redis.set(cache_key, "1", ex=86400)  # Кеш на 24 часа
             return await handler(message, data)
 
         try:

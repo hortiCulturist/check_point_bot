@@ -1,6 +1,8 @@
 from datetime import datetime
 
 from bot_app.db.main import create_con
+from bot_app.misc import redis
+from bot_app.utils.base import invalidate_task_cache
 from bot_app.utils.logger import log_chat_event
 
 
@@ -15,6 +17,9 @@ class TaskTable:
             """
             await con.execute(query, chat_id, title, task_type, url, button_text, expires_at)
             log_chat_event(chat_id, "DB", f"🆕 Задание добавлено: {title}")
+
+            await invalidate_task_cache(chat_id)
+
         except Exception as e:
             log_chat_event(chat_id, "DB", f"❌ Ошибка при добавлении задания: {e}")
         finally:
@@ -51,9 +56,12 @@ class TaskTable:
     async def delete_task(task_id: int):
         con = await create_con()
         try:
-            query = "DELETE FROM tasks WHERE id = $1;"
-            await con.execute(query, task_id)
-            log_chat_event(task_id, "DB", "🗑️ Задание удалено")
+            query = "DELETE FROM tasks WHERE id = $1 RETURNING chat_id;"
+            result = await con.fetchrow(query, task_id)
+            if result:
+                chat_id = result["chat_id"]
+                await invalidate_task_cache(chat_id)
+                log_chat_event(chat_id, "DB", "🗑️ Задание удалено")
         except Exception as e:
             log_chat_event(task_id, "DB", f"❌ Ошибка при удалении задания: {e}")
         finally:
@@ -64,14 +72,21 @@ class TaskTable:
         con = await create_con()
         try:
             query = """
-                    UPDATE tasks
-                    SET is_active = FALSE
-                    WHERE expires_at IS NOT NULL
-                      AND expires_at < NOW()
-                      AND is_active = TRUE
-                    RETURNING chat_id, id, title
-                """
-            return await con.fetch(query)
+                UPDATE tasks
+                SET is_active = FALSE
+                WHERE expires_at IS NOT NULL
+                  AND expires_at < NOW()
+                  AND is_active = TRUE
+                RETURNING chat_id, id, title
+            """
+            rows = await con.fetch(query)
+
+            unique_chat_ids = {row["chat_id"] for row in rows}
+            for chat_id in unique_chat_ids:
+                await invalidate_task_cache(chat_id)
+                log_chat_event(chat_id, "Redis", f"♻️ Кеш очищен (auto-деактивация заданий)")
+
+            return rows
         finally:
             await con.close()
 
