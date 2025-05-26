@@ -57,3 +57,15 @@ class TaskCompletionTable:
             return required_ids.issubset(completed_ids)
         finally:
             await con.close()
+
+    @staticmethod
+    async def get_completed_task_ids(user_id: int, chat_id: int) -> set[int]:
+        con = await create_con()
+        try:
+            rows = await con.fetch(
+                "SELECT task_id FROM task_completions WHERE user_id = $1 AND chat_id = $2",
+                user_id, chat_id
+            )
+            return {row['task_id'] for row in rows}
+        finally:
+            await con.close()

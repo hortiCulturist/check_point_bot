@@ -36,6 +36,16 @@ async def start_handler(message: Message, state: FSMContext):
         await UserTable.add_user(user_id, user.username, user.full_name)
         await UserChatLinkTable.add_link(user_id, chat_id)
 
+        tasks = await TaskTable.get_active_tasks(chat_id)
+
+        if tasks:
+            from bot_app.db.common.task_completions import TaskCompletionTable
+            completed_ids = await TaskCompletionTable.get_completed_task_ids(user_id, chat_id)
+            task_ids = {task["id"] for task in tasks}
+
+            if task_ids.issubset(completed_ids):
+                return await message.answer("✅ Вы уже выполнили все задания и получили доступ к чату.")
+
         await state.update_data(
             chat_id=chat_id,
             user_id=user_id,
@@ -43,12 +53,9 @@ async def start_handler(message: Message, state: FSMContext):
         )
         await state.set_state(AccessFlow.waiting_for_check)
 
-        tasks = await TaskTable.get_active_tasks(chat_id)
-
         if tasks:
             from bot_app.markups.user.base import get_tasks_markup
             markup = get_tasks_markup(tasks)
-
             titles = "\n".join([f"🔹 {task['title']}" for task in tasks])
             text = f"📋 Выполните все задания:\n\n{titles}\n\n👉 Когда выполните, нажмите кнопку ниже."
         else:

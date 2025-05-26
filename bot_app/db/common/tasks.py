@@ -46,7 +46,7 @@ class TaskTable:
         try:
             query = "UPDATE tasks SET is_active = FALSE WHERE id = $1;"
             await con.execute(query, task_id)
-            log_chat_event(task_id, "DB", "⛔ Задание деактивировано")
+            log_chat_event(chat_id, "DB", "⛔ Задание деактивировано")
         except Exception as e:
             log_chat_event(task_id, "DB", f"❌ Ошибка при деактивации задания: {e}")
         finally:

@@ -19,29 +19,40 @@ class AccessControlMiddleware(BaseMiddleware):
         data: Dict
     ) -> Awaitable:
 
-        if message.from_user.id in ADMIN_ID:
-            return await handler(message, data)
-
-        if message.chat.type != "supergroup":
-            return await handler(message, data)
-
         user_id = message.from_user.id
         chat_id = message.chat.id
 
+        print(f"\n🧭 Middleware Triggered | user: {user_id}, chat: {chat_id}, type: {message.chat.type}")
+
+        if user_id in ADMIN_ID:
+            print("🔓 Пропущен — администратор")
+            return await handler(message, data)
+
+        if message.chat.type != "supergroup":
+            print("💬 Пропущен — не супергруппа")
+            return await handler(message, data)
+
         if not await ChatsTable.is_active(chat_id):
+            print(f"🚫 Пропущен — группа {chat_id} неактивна")
             return await handler(message, data)
 
         cache_key = f"verified:{chat_id}:{user_id}"
+        cached = await redis.get(cache_key)
 
-        if await redis.get(cache_key):
+        if cached:
+            print(f"🧠 Пропущен — найден кеш: {cache_key}")
             return await handler(message, data)
 
+        print("🔍 Проверка: пользователь выполнил все задания?")
         completed = await TaskCompletionTable.has_completed_all(user_id, chat_id)
+        print(f"✔️ Выполнены все задания? — {completed}")
 
         if completed:
-            await redis.set(cache_key, "1", ex=86400)  # Кеш на 24 часа
+            print(f"✅ Сохраняем в кеш: {cache_key}")
+            await redis.set(cache_key, "1", ex=86400)
             return await handler(message, data)
 
+        print(f"⛔ Ограничиваем {user_id} в чате {chat_id}")
         try:
             await bot.delete_message(chat_id, message.message_id)
             await bot.restrict_chat_member(
@@ -52,10 +63,11 @@ class AccessControlMiddleware(BaseMiddleware):
 
             await bot.send_message(
                 chat_id=chat_id,
-                text=f"👋 Чтобы писать в чате — откройте бота и выполните задание:",
+                text="👋 Чтобы писать в чате — откройте бота и выполните задание:",
                 reply_markup=await get_start_button(chat_id)
             )
 
             log_chat_event(chat_id, "Bot", f"🔒 {user_id} ограничен до выполнения всех заданий")
         except Exception as e:
+            print(f"❌ Ошибка при auto-муте: {e}")
             log_chat_event(chat_id, "Bot", f"❌ Ошибка при auto-муте: {e}")

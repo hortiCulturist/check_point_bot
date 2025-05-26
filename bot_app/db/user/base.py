@@ -12,8 +12,9 @@ class UserTable:
                 VALUES ($1, $2, $3)
                 ON CONFLICT (user_id) DO NOTHING;
             """
-            await con.execute(query, user_id, username, full_name)
-            log_chat_event(user_id, "DB", f"👤 Пользователь зарегистрирован: {username or full_name}")
+            result = await con.execute(query, user_id, username, full_name)
+            if result == "INSERT 0 1":
+                log_chat_event(user_id, "DB", f"👤 Пользователь зарегистрирован: {username or full_name}")
         except Exception as e:
             log_chat_event(user_id, "DB", f"❌ Ошибка при добавлении пользователя: {e}")
         finally:
@@ -30,8 +31,9 @@ class UserChatLinkTable:
                 VALUES ($1, $2)
                 ON CONFLICT (user_id, chat_id) DO NOTHING;
             """
-            await con.execute(query, user_id, chat_id)
-            log_chat_event(chat_id, "DB", f"🔗 Связь с пользователем {user_id} добавлена")
+            result = await con.execute(query, user_id, chat_id)
+            if result == "INSERT 0 1":
+                log_chat_event(chat_id, "DB", f"🔗 Связь с пользователем {user_id} добавлена")
         except Exception as e:
             log_chat_event(chat_id, "DB", f"❌ Ошибка при добавлении связи user-chat: {e}")
         finally:
