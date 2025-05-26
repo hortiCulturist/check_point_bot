@@ -36,7 +36,9 @@ class AccessControlMiddleware(BaseMiddleware):
         if await redis.get(cache_key):
             return await handler(message, data)
 
-        if await TaskCompletionTable.has_completed_all(user_id, chat_id):
+        completed = await TaskCompletionTable.has_completed_all(user_id, chat_id)
+
+        if completed:
             await redis.set(cache_key, "1", ex=86400)  # Кеш на 24 часа
             return await handler(message, data)
 
