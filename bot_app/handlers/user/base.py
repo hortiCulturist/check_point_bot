@@ -4,7 +4,7 @@ from aiogram import types
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
-from bot_app.config import ADMIN_ID
+from bot_app.config import ADMIN_ID, WAIT_SECONDS
 from bot_app.db.common.task_completions import TaskCompletionTable
 from bot_app.db.common.tasks import TaskTable
 from bot_app.db.user.base import UserChatLinkTable
@@ -23,7 +23,7 @@ async def check_access(call: CallbackQuery, state: FSMContext):
     if start_time_str:
         start_time = datetime.fromisoformat(start_time_str)
         elapsed = (datetime.utcnow() - start_time).total_seconds()
-        if elapsed < 15:
+        if elapsed < WAIT_SECONDS:
             return await call.message.answer("⏳ Не так быстро. Выполните задание.")
 
     try:

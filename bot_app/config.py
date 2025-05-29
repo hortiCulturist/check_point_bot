@@ -7,3 +7,5 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 ADMIN_ID = os.getenv("ADMIN_ID")
 ADMIN_ID = list(map(int, ADMIN_ID.split(',')))
+
+WAIT_SECONDS = 5
